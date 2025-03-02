@@ -1,3 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IllusioMax Pro</title>
+    <style>
+        :root {
+            --primary: #1a1b4b;
+            --secondary: #e83a99;
+            --accent: #00e5ff;
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+            --bg: #0f0f13;
+            --panel: #1e1e2f;
+            --panel-bright: #2a2a42;
+            --text: #f0f0f5;
+            --text-muted: #a0a0b0;
+            --border: #3a3a5a;
+            --shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+        * {margin:0;padding:0;box-sizing:border-box;transition:all 0.2s ease;}
+        body {font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+        .app {display:flex;flex-direction:column;height:100vh;}
+        header {
+            background:var(--gradient);
+            padding:1.2rem;
+            color:#fff;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            box-shadow:var(--shadow);
+            position:relative;
+            z-index:10;
+        }
+        header:after {
+            content:'';
+            position:absolute;
+            bottom:-3px;
+            left:0;
+            right:0;
+            height:3px;
+            background:var(--accent);
+            opacity:0.6;
+        }
+        h1 {
+            font-size:2.2rem;
+            letter-spacing:2px;
+            text-shadow:0 2px 10px rgba(0,0,0,0.3);
+            display:flex;
+            align-items:center;
+        }
+        h1:before {
+            content:'';
+            display:inline-block;
+            width:24px;
+            height:24px;
+            background:var(--accent);
+            border-radius:50%;
+            margin-right:12px;
+            box-shadow:0 0 15px var(--accent);
+        }
+        .main {flex:1;display:flex;height:calc(100vh - 74px);overflow:hidden;}
+        .panel {
+            background:var(--panel);
+            box-shadow:var(--shadow);
+            border-right:1px solid var(--border);
+            display:flex;
+            flex-direction:column;
+            overflow:hidden;
+        }
+        .left-panel {width:270px;}
+        .right-panel {width:300px;border-left:1px solid var(--border);border-right:none;}
+        .canvas-container {
+            flex:1;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:#12121a;
+            position:relative;
+            overflow:hidden;
+        }
+        .canvas-container:before {
+            content:'';
+            position:absolute;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            background:radial-gradient(circle, transparent 70%, #0a0a12);
+            pointer-events:none;
+            z-index:1;
+        }
+        #illusionCanvas {
+            background:#000;
+            box-shadow:0 0 40px rgba(0,229,255,0.3);
+            border-radius:5px;
+            z-index:0;
+        }
+        .canvas-controls {
+            position:absolute;
+            bottom:20px;
+            left:50%;
+            transform:translateX(-50%);
+            background:rgba(15,15,25,0.8);
+            padding:12px 20px;
+            border-radius:30px;
+            display:flex;
+            gap:20px;
+            backdrop-filter:blur(10px);
+            box-shadow:0 5px 20px rgba(0,0,0,0.3);
+            border:1px solid var(--border);
+            z-index:10;
+        }
+        .control-btn {
+            background:none;
+            border:none;
+            color:var(--text);
+            font-size:1.4rem;
+            cursor:pointer;
+            width:40px;
+            height:40px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border-radius:50%;
+        }
+        .control-btn:hover {
+            background:rgba(255,255,255,0.1);
+            color:var(--accent);
+            transform:scale(1.1);
+        }
+        .panel-header {
+            padding:15px;
+            border-bottom:1px solid var(--border);
+            background:var(--panel-bright);
+        }
+        .panel-title {
+            font-size:1.2rem;
+            font-weight:600;
+            letter-spacing:1px;
+            color:var(--accent);
+        }
+        .panel-content {
+            flex:1;
+            overflow-y:auto;
+            padding:15px;
+        }
+        .illusion-list {
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+        }
+        .illusion-item {
+            display:flex;
+            align-items:center;
+            padding:12px;
+            border-radius:8px;
+            cursor:pointer;
+            background:var(--panel-bright);
+            border:1px solid transparent;
+        }
+        .illusion-item:hover {
+            background:#2d2d48;
+            transform:translateY(-2px);
+            box-shadow:0 5px 15px rgba(0,0,0,0.2);
+        }
+        .illusion-item.active {
+            background:#2d2d48;
+            border:1px solid var(--secondary);
+            box-shadow:0 0 10px rgba(232,58,153,0.2);
+        }
+        .illusion-preview {
+            width:70px;
+            height:70px;
+            border-radius:8px;
+            margin-right:12px;
+            background:#000;
+            overflow:hidden;
+            box-shadow:0 3px 10px rgba(0,0,0,0.3);
+        }
+        .illusion-info {flex:1;}
+        .illusion-title {
+            font-weight:600;
+            margin-bottom:5px;
+            font-size:1.1rem;
+        }
+        .illusion-desc {
+            font-size:0.85rem;
+            color:var(--text-muted);
+        }
+        .control-group {
+            margin-bottom:20px;
+            background:var(--panel-bright);
+            padding:12px;
+            border-radius:8px;
+        }
+        .control-label {
+            display:flex;
+            justify-content:space-between;
+            margin-bottom:8px;
+            font-weight:500;
+        }
+        .parameter-value {
+            font-size:0.9rem;
+            color:var(--accent);
+        }
+        .control-input {
+            width:100%;
+            padding:8px;
+            background:#2d2d48;
+            border:1px solid var(--border);
+            border-radius:6px;
+            color:var(--text);
+        }
+        input[type="range"] {
+            -webkit-appearance:none;
+            height:8px;
+            border-radius:4px;
+            background:#2d2d48;
+            outline:none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance:none;
+            width:18px;
+            height:18px;
+            border-radius:50%;
+            background:var(--secondary);
+            cursor:pointer;
+            box-shadow:0 0 5px rgba(232,58,153,0.5);
+        }
+        input[type="color"] {
+            height:36px;
+            cursor:pointer;
+        }
+        select.control-input {
+            height:36px;
+            cursor:pointer;
+        }
+        .btn {
+            width:100%;
+            padding:12px;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+            margin-bottom:10px;
+            font-weight:600;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+        }
+        .btn.primary {
+            background:var(--gradient);
+            color:#fff;
+        }
+        .btn.secondary {
+            background:#2d2d48;
+            color:var(--text);
+            border:1px solid var(--border);
+        }
+        .btn:hover {
+            transform:translateY(-2px);
+            box-shadow:0 5px 15px rgba(0,0,0,0.2);
+        }
+        .export-section {
+            border-top:1px solid var(--border);
+            padding-top:20px;
+            margin-top:20px;
+        }
+        .panel-scrollbar::-webkit-scrollbar {
+            width:5px;
+        }
+        .panel-scrollbar::-webkit-scrollbar-track {
+            background:var(--panel);
+        }
+        .panel-scrollbar::-webkit-scrollbar-thumb {
+            background:var(--border);
+            border-radius:3px;
+        }
+        footer {
+            text-align:center;
+            padding:12px;
+            background:var(--panel-bright);
+            color:var(--text-muted);
+            font-size:0.9rem;
+            border-top:1px solid var(--border);
+        }
+        .btn-icon {
+            font-size:1.2rem;
+        }
+        @media(max-width:1100px){
+            .left-panel {width:220px;}
+            .right-panel {width:250px;}
+        }
+        @media(max-width:768px){
+            .main{flex-direction:column;height:auto;}
+            .left-panel,.right-panel{width:100%;max-height:300px;}
+            .canvas-container{height:60vh;}
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <h1>IllusioMax Pro</h1>
+            <div id="app-status">Creating visual magic</div>
+        </header>
+        <div class="main">
+            <div class="panel left-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Illusion Library</h2>
+                </div>
+                <div class="panel-content panel-scrollbar">
+                    <div class="illusion-list">
+                        <div class="illusion-item active" data-type="spinning-vortex">
+                            <div class="illusion-preview" id="preview-spinning-vortex"></div>
+                            <div class="illusion-info">
+                                <div class="illusion-title">Spinning Vortex</div>
+                                <div class="illusion-desc">Hypnotic spiral pattern with dynamic rotation</div>
+                            </div>
+                        </div>
+                        <div class="illusion-item" data-type="moving-stripes">
+                            <div class="illusion-preview" id="preview-moving-stripes"></div>
+                            <div class="illusion-info">
+                                <div class="illusion-title">Moving Stripes</div>
+                                <div class="illusion-desc">Flowing lines creating optical movement</div>
+                            </div>
+                        </div>
+                        <div class="illusion-item" data-type="depth-illusion">
+                            <div class="illusion-preview" id="preview-depth-illusion"></div>
+                            <div class="illusion-info">
+                                <div class="illusion-title">Depth Illusion</div>
+                                <div class="illusion-desc">Visual layers creating 3D perception</div>
+                            </div>
+                        </div>
+                        <div class="illusion-item" data-type="stroboscopic">
+                            <div class="illusion-preview" id="preview-stroboscopic"></div>
+                            <div class="illusion-info">
+                                <div class="illusion-title">Stroboscopic Flash</div>
+                                <div class="illusion-desc">High-contrast patterns with flashing effect</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="illusionCanvas" width="600" height="600"></canvas>
+                <div class="canvas-controls">
+                    <button id="playBtn" class="control-btn">▶</button>
+                    <button id="pauseBtn" class="control-btn">⏸</button>
+                    <button id="resetBtn" class="control-btn">⟳</button>
+                </div>
+            </div>
+            <div class="panel right-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Customization</h2>
+                </div>
+                <div class="panel-content panel-scrollbar">
+                    <div class="control-group">
+                        <label class="control-label">Background <span id="bgColorValue" class="parameter-value">#000000</span></label>
+                        <input type="color" id="bgColor" class="control-input" value="#000000">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Primary Color <span id="primaryColorValue" class="parameter-value">#ffffff</span></label>
+                        <input type="color" id="primaryColor" class="control-input" value="#ffffff">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Secondary Color <span id="secondaryColorValue" class="parameter-value">#00e5ff</span></label>
+                        <input type="color" id="secondaryColor" class="control-input" value="#00e5ff">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Speed <span id="speedValue" class="parameter-value">5</span></label>
+                        <input type="range" id="speed" min="1" max="10" value="5" class="control-input">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Size <span id="sizeValue" class="parameter-value">50</span></label>
+                        <input type="range" id="size" min="10" max="100" value="50" class="control-input">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Density <span id="densityValue" class="parameter-value">30</span></label>
+                        <input type="range" id="density" min="5" max="100" value="30" class="control-input">
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Intensity <span id="intensityValue" class="parameter-value">5</span></label>
+                        <input type="range" id="intensity" min="1" max="10" value="5" class="control-input">
+                    </div>
+                    <div id="additionalControls"></div>
+                    <div class="export-section">
+                        <button id="exportGif" class="btn primary"><span class="btn-icon">⬇</span> Export as GIF</button>
+                        <button id="exportPng" class="btn secondary"><span class="btn-icon">📷</span> Export as PNG</button>
+                        <button id="saveProject" class="btn secondary"><span class="btn-icon">💾</span> Save Project</button>
+                        <button id="exportMp4" class="btn secondary"><span class="btn-icon">🎬</span> Export as MP4</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>IllusioMax Pro © 2025 | Advanced Visual Patterns</footer>
+    </div>
 
-<!-- saved from url=(0032)http://192.168.2.100:8080/1.html -->
-<html></html>
+    <script>
+        // App state
+        const state = {
+            currentIllusion: 'spinning-vortex',
+            isPlaying: true,
+            history: [],
+            historyIndex: -1,
+            params: {
+                bgColor: '#000000',
+                primaryColor: '#ffffff',
+                secondaryColor: '#00e5ff',
+                speed: 5,
+                size: 50,
+                density: 30,
+                intensity: 5,
+                rotationDirection: 1,
+                time: 0
+            }
+        };
+        
+        // DOM Elements
+        const canvas = document.getElementById('illusionCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationId, lastTimestamp = 0;
+        
+        // Initialize app
+        function init() {
+            setupEventListeners();
+            initPreviews();
+            requestAnimationFrame(animationLoop);
+            saveState();
+            updateStatusMessage();
+        }
+        
+        // Update status message
+        function updateStatusMessage() {
+            const statusMessages = [
+                "Creating visual magic",
+                `Rendering ${state.currentIllusion.replace('-', ' ')}`,
+                "Generating optical illusion",
+                "Processing visual patterns"
+            ];
+            const statusElement = document.getElementById('app-status');
+            statusElement.textContent = statusMessages[Math.floor(Math.random() * statusMessages.length)];
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Illusion selection
+            document.getElementById('exportMp4').addEventListener('click', () => {
+    exportAsMp4();
+});
+            document.querySelectorAll('.illusion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelector('.illusion-item.active').classList.remove('active');
+                    item.classList.add('active');
+                    state.currentIllusion = item.dataset.type;
+                    updateAdditionalControls();
+                    saveState();
+                    updateStatusMessage();
+                    document.getElementById('exportMp4').addEventListener('click', () => {
+    exportAsMp4();
+    document.getElementById('app-status').textContent = "Exporting as MP4...";
+});
+                });
+            });
+            
+            // Control inputs
+            const inputs = {
+                'bgColor': 'bgColorValue',
+                'primaryColor': 'primaryColorValue',
+                'secondaryColor': 'secondaryColorValue',
+                'speed': 'speedValue',
+                'size': 'sizeValue',
+                'density': 'densityValue',
+                'intensity': 'intensityValue'
+            };
+            
+            Object.entries(inputs).forEach(([id, valueId]) => {
+                const input = document.getElementById(id);
+                input.addEventListener('input', (e) => {
+                    state.params[id] = input.type === 'range' ? parseInt(e.target.value) : e.target.value;
+                    document.getElementById(valueId).textContent = e.target.value;
+                });
+            });
+            
+            // Playback controls
+            document.getElementById('playBtn').addEventListener('click', () => {
+                state.isPlaying = true;
+                updateStatusMessage();
+            });
+            document.getElementById('pauseBtn').addEventListener('click', () => {
+                state.isPlaying = false;
+                document.getElementById('app-status').textContent = "Paused";
+            });
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                state.params.time = 0;
+                updateStatusMessage();
+            });
+            
+            // Export functionality
+            document.getElementById('exportGif').addEventListener('click', () => {
+                alert('GIF export would be implemented here');
+                document.getElementById('app-status').textContent = "Exporting as GIF...";
+            });
+            document.getElementById('exportPng').addEventListener('click', () => {
+                exportAsPng();
+                document.getElementById('app-status').textContent = "Exported as PNG";
+            });
+            document.getElementById('saveProject').addEventListener('click', () => {
+                saveProjectToFile();
+                document.getElementById('app-status').textContent = "Project saved";
+            });
+            
+            // Undo/Redo shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'z') undo();
+                else if (e.ctrlKey && e.key === 'y') redo();
+            });
+            
+            // Resize handler
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+            });
+        }
+        
+        // Resize canvas to maintain aspect ratio
+        function resizeCanvas() {
+            const container = document.querySelector('.canvas-container');
+            const maxWidth = container.clientWidth * 0.9;
+            const maxHeight = container.clientHeight * 0.9;
+            const aspectRatio = 1;
+            
+            let newWidth, newHeight;
+            
+            if (maxWidth / aspectRatio < maxHeight) {
+                newWidth = maxWidth;
+                newHeight = maxWidth / aspectRatio;
+            } else {
+                newHeight = maxHeight;
+                newWidth = maxHeight * aspectRatio;
+            }
+            
+            canvas.style.width = `${newWidth}px`;
+            canvas.style.height = `${newHeight}px`;
+        }
+        
+        // Initialize preview canvases
+        function initPreviews() {
+            ['spinning-vortex', 'moving-stripes', 'depth-illusion', 'stroboscopic'].forEach(type => {
+                const previewCtx = document.createElement('canvas').getContext('2d');
+                previewCtx.canvas.width = previewCtx.canvas.height = 70;
+                
+                const drawFunc = {
+                    'spinning-vortex': drawSpinningVortex,
+                    'moving-stripes': drawMovingStripes,
+                    'depth-illusion': drawDepthIllusion,
+                    'stroboscopic': drawStroboscopic
+                }[type];
+                
+                drawFunc(previewCtx, {
+                    bgColor: '#000000', 
+                    primaryColor: '#ffffff',
+                    secondaryColor: '#00e5ff', 
+                    size: 20, 
+                    density: 15, 
+                    intensity: 6,
+                    time: 2.5
+                });
+                
+                const img = new Image();
+                img.src = previewCtx.canvas.toDataURL();
+                const preview = document.getElementById(`preview-${type}`);
+                preview.innerHTML = '';
+                preview.appendChild(img);
+            });
+        }
+        
+        // Main animation loop
+        function animationLoop(timestamp) {
+            const deltaTime = (timestamp - lastTimestamp) / 1000;
+            lastTimestamp = timestamp;
+            
+            if (state.isPlaying) {
+                state.params.time = (state.params.time || 0) + (deltaTime * state.params.speed);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const drawFunc = {
+                    'spinning-vortex': drawSpinningVortex,
+                    'moving-stripes': drawMovingStripes,
+                    'depth-illusion': drawDepthIllusion,
+                    'stroboscopic': drawStroboscopic
+                }[state.currentIllusion];
+                
+                drawFunc(ctx, state.params);
+            }
+            
+            animationId = requestAnimationFrame(animationLoop);
+        }
+        
+        // Drawing functions with enhanced visual effects
+        function drawSpinningVortex(ctx, params) {
+            const { bgColor, primaryColor, secondaryColor, size, density, intensity, time } = params;
+            const width = ctx.canvas.width, height = ctx.canvas.height;
+            const centerX = width / 2, centerY = height / 2;
+            const maxRadius = Math.min(width, height) / 2;
+            
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+            
+            const spiralCount = Math.max(3, Math.floor(density / 8));
+            const rotationDirection = params.rotationDirection || 1;
+            
+            // Draw glow effect
+            ctx.save();
+            ctx.globalAlpha = 0.2;
+            ctx.filter = 'blur(20px)';
+            
+            for (let s = 0; s < spiralCount; s++) {
+                const spiralOffset = (s / spiralCount) * Math.PI * 2;
+                ctx.beginPath();
+                for (let i = 0; i < maxRadius; i += 4) {
+                    const angle = (i / size) * Math.PI * 8 + time * rotationDirection + spiralOffset;
+                    const x = centerX + Math.cos(angle) * i;
+                    const y = centerY + Math.sin(angle) * i;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = s % 2 === 0 ? primaryColor : secondaryColor;
+                ctx.lineWidth = Math.max(6, intensity * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+            
+            // Draw main spiral
+            for (let s = 0; s < spiralCount; s++) {
+                const spiralOffset = (s / spiralCount) * Math.PI * 2;
+                ctx.beginPath();
+                for (let i = 0; i < maxRadius; i += 2) {
+                    const angle = (i / size) * Math.PI * 8 + time * rotationDirection + spiralOffset;
+                    const x = centerX + Math.cos(angle) * i;
+                    const y = centerY + Math.sin(angle) * i;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                }
+                ctx.strokeStyle = s % 2 === 0 ? primaryColor : secondaryColor;
+                ctx.lineWidth = Math.max(2, intensity);
+                ctx.stroke();
+            }
+        }
+        
+        function drawMovingStripes(ctx, params) {
+            const { bgColor, primaryColor, secondaryColor, density, intensity, time } = params;
+            const width = ctx.canvas.width, height = ctx.canvas.height;
+            
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+            
+            const stripeWidth = Math.max(5, 100 / density);
+            const stripeCount = Math.ceil(width / stripeWidth) + 1;
+            
+            // Draw glow effect
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            ctx.filter = 'blur(15px)';
+            
+            for (let i = 0; i < stripeCount; i++) {
+                const offset = (time * 50) % (stripeWidth * 2);
+                const x = i * stripeWidth * 2 - offset;
+                
+                ctx.fillStyle = i % 2 === 0 ? primaryColor : secondaryColor;
+                ctx.fillRect(x, 0, stripeWidth, height);
+                
+                const oppositeX = i * stripeWidth * 2 + offset;
+                ctx.fillRect(oppositeX, height / 2, stripeWidth, height / 2);
+            }
+            ctx.restore();
+            
+            // Draw main stripes
+            for (let i = 0; i < stripeCount; i++) {
+                const offset = (time * 50) % (stripeWidth * 2);
+                const x = i * stripeWidth * 2 - offset;
+                
+                ctx.fillStyle = i % 2 === 0 ? primaryColor : secondaryColor;
+                ctx.fillRect(x, 0, stripeWidth, height);
+                
+                const oppositeX = i * stripeWidth * 2 + offset;
+                ctx.fillRect(oppositeX, height / 2, stripeWidth, height / 2);
+            }
+            
+            // Add subtle overlay pattern
+            ctx.save();
+            ctx.globalAlpha = 0.1;
+            for (let y = 0; y < height; y += 4) {
+                ctx.fillStyle = y % 8 === 0 ? primaryColor : 'transparent';
+                ctx.fillRect(0, y, width, 1);
+            }
+            ctx.restore();
+        }
+        
+        function drawDepthIllusion(ctx, params) {
+            const { bgColor, primaryColor, secondaryColor, density, intensity, time } = params;
+            const width = ctx.canvas.width, height = ctx.canvas.height;
+            const centerX = width / 2, centerY = height / 2;
+            
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, width, height);
+            
+            const maxSquares = Math.max(5, Math.min(20, density / 5));
+            const squareSize = Math.min(width, height) / maxSquares;
+            
+            // Draw glow
+            ctx.save();
+            ctx.globalAlpha = 0.2;
+            ctx.filter = 'blur(30px)';
+            for (let i = maxSquares; i > 0; i -= 3) {
+                const scaledSize = i * squareSize;
+                const pulseSize = Math.sin(time + i * 0.1) * (intensity * 2);
+                const finalSize = scaledSize + pulseSize;
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(time * 0.1);
+                ctx.fillStyle = i % 2 === 0 ? primaryColor : secondaryColor;
+                ctx.fillRect(-finalSize / 2, -finalSize / 2, finalSize, finalSize);
+                ctx.restore();
+            }
+            ctx.restore();
+            
+            // Draw main shapes
+            for (let i = maxSquares; i > 0; i--) {
+                const scaledSize = i * squareSize;
+                const pulseSize = Math.sin(time + i * 0.1) * (intensity * 2);
+                const finalSize = scaledSize + pulseSize;
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(time * 0.1);
+                ctx.fillStyle = i % 2 === 0 ? primaryColor : secondaryColor;
+                ctx.fillRect(-finalSize / 2, -finalSize / 2, finalSize, finalSize);
+                ctx.restore();
+            }
+        }
+        
+        function drawStroboscopic(ctx, params) {
+            const { bgColor, primaryColor, secondaryColor, density, intensity, time } = params;
+            const width = ctx.canvas.width, height = ctx.canvas.height;
+            
+            const strobeRate = 0.1 + (intensity / 10);
+            const strobeState = Math.floor(time * strobeRate) % 2;
+            
+            ctx.fillStyle = strobeState === 0 ? bgColor : primaryColor;
+            ctx.fillRect(0, 0, width, height);
+            
+            if (strobeState === 1) {
+                // Glow effect
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.filter = 'blur(20px)';
+                
+                const circleCount = Math.max(3, density / 8);
+                const maxRadius = Math.min(width, height) / 2;
+                const radiusStep = maxRadius / circleCount;
+                
+                for (let i = 0; i < circleCount; i++) {
+                    ctx.beginPath();
+                    ctx.arc(width / 2, height / 2, i * radiusStep, 0, Math.PI * 2);
+                    ctx.strokeStyle = i % 2 === 0 ? secondaryColor : bgColor;
+                    ctx.lineWidth = Math.max(4, params.size / 8);
+                    ctx.stroke();
+                }
+                ctx.restore();
+                
+                // Main pattern
+                // Main pattern
+                const circleCount2 = Math.max(5, density / 5);
+                const radiusStep2 = maxRadius / circleCount2;
+                
+                for (let i = 0; i < circleCount2; i++) {
+                    ctx.beginPath();
+                    ctx.arc(width / 2, height / 2, i * radiusStep2, 0, Math.PI * 2);
+                    ctx.strokeStyle = i % 2 === 0 ? secondaryColor : bgColor;
+                    ctx.lineWidth = Math.max(2, params.size / 12);
+                    ctx.stroke();
+                }
+                
+                // Add cross pattern
+                ctx.save();
+                ctx.globalAlpha = 0.7;
+                ctx.beginPath();
+                ctx.moveTo(0, height / 2);
+                ctx.lineTo(width, height / 2);
+                ctx.moveTo(width / 2, 0);
+                ctx.lineTo(width / 2, height);
+                ctx.strokeStyle = secondaryColor;
+                ctx.lineWidth = Math.max(1, intensity);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        
+        // Update additional controls based on current illusion
+        function updateAdditionalControls() {
+            const container = document.getElementById('additionalControls');
+            container.innerHTML = '';
+            
+            if (state.currentIllusion === 'spinning-vortex') {
+                const rotationGroup = document.createElement('div');
+                rotationGroup.className = 'control-group';
+                
+                const label = document.createElement('label');
+                label.className = 'control-label';
+                label.innerHTML = 'Rotation Direction <span id="rotationValue" class="parameter-value">Clockwise</span>';
+                
+                const select = document.createElement('select');
+                select.className = 'control-input';
+                select.id = 'rotationDirection';
+                
+                const options = [
+                    { value: 1, text: 'Clockwise' },
+                    { value: -1, text: 'Counter-clockwise' }
+                ];
+                
+                options.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.text = option.text;
+                    select.appendChild(opt);
+                });
+                
+                select.value = state.params.rotationDirection || 1;
+                select.addEventListener('change', (e) => {
+                    state.params.rotationDirection = parseInt(e.target.value);
+                    document.getElementById('rotationValue').textContent = e.target.options[e.target.selectedIndex].text;
+                    saveState();
+                });
+                
+                rotationGroup.appendChild(label);
+                rotationGroup.appendChild(select);
+                container.appendChild(rotationGroup);
+            } else if (state.currentIllusion === 'depth-illusion') {
+                const depthGroup = document.createElement('div');
+                depthGroup.className = 'control-group';
+                
+                const label = document.createElement('label');
+                label.className = 'control-label';
+                label.innerHTML = 'Depth Effect <span id="depthValue" class="parameter-value">Medium</span>';
+                
+                const range = document.createElement('input');
+                range.type = 'range';
+                range.min = 1;
+                range.max = 10;
+                range.value = state.params.depthEffect || 5;
+                range.className = 'control-input';
+                range.id = 'depthEffect';
+                
+                range.addEventListener('input', (e) => {
+                    state.params.depthEffect = parseInt(e.target.value);
+                    const depthLabels = ['Minimal', 'Very Low', 'Low', 'Moderate', 'Medium', 'Enhanced', 'Strong', 'Very Strong', 'Intense', 'Maximum'];
+                    document.getElementById('depthValue').textContent = depthLabels[state.params.depthEffect - 1];
+                    saveState();
+                });
+                
+                depthGroup.appendChild(label);
+                depthGroup.appendChild(range);
+                container.appendChild(depthGroup);
+            } else if (state.currentIllusion === 'stroboscopic') {
+                const warningGroup = document.createElement('div');
+                warningGroup.className = 'control-group';
+                warningGroup.style.background = 'rgba(255, 100, 100, 0.1)';
+                warningGroup.style.borderLeft = '3px solid rgba(255, 100, 100, 0.5)';
+                warningGroup.innerHTML = '<p style="margin: 0; color: var(--text-muted);">⚠️ Warning: This effect contains flashing elements. Use caution if you are sensitive to flashing lights.</p>';
+                container.appendChild(warningGroup);
+                
+                const flashGroup = document.createElement('div');
+                flashGroup.className = 'control-group';
+                
+                const label = document.createElement('label');
+                label.className = 'control-label';
+                label.innerHTML = 'Flash Type <span id="flashTypeValue" class="parameter-value">Standard</span>';
+                
+                const select = document.createElement('select');
+                select.className = 'control-input';
+                select.id = 'flashType';
+                
+                const options = [
+                    { value: 'standard', text: 'Standard' },
+                    { value: 'alternating', text: 'Alternating' },
+                    { value: 'pulsing', text: 'Pulsing' }
+                ];
+                
+                options.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.text = option.text;
+                    select.appendChild(opt);
+                });
+                
+                select.value = state.params.flashType || 'standard';
+                select.addEventListener('change', (e) => {
+                    state.params.flashType = e.target.value;
+                    document.getElementById('flashTypeValue').textContent = e.target.options[e.target.selectedIndex].text;
+                    saveState();
+                });
+                
+                flashGroup.appendChild(label);
+                flashGroup.appendChild(select);
+                container.appendChild(flashGroup);
+            }
+        }
+        
+        // Save current state for undo/redo functionality
+        function saveState() {
+            // If we're not at the end of the history, truncate
+            if (state.historyIndex < state.history.length - 1) {
+                state.history = state.history.slice(0, state.historyIndex + 1);
+            }
+            
+            // Create a deep copy of current state
+            const stateCopy = {
+                currentIllusion: state.currentIllusion,
+                params: JSON.parse(JSON.stringify(state.params))
+            };
+            
+            // Add to history
+            state.history.push(stateCopy);
+            state.historyIndex = state.history.length - 1;
+            
+            // Limit history size
+            if (state.history.length > 30) {
+                state.history.shift();
+                state.historyIndex--;
+            }
+        }
+        
+        // Undo function
+        function undo() {
+            if (state.historyIndex <= 0) return;
+            
+            state.historyIndex--;
+            const prevState = state.history[state.historyIndex];
+            state.currentIllusion = prevState.currentIllusion;
+            state.params = JSON.parse(JSON.stringify(prevState.params));
+            
+            // Update UI to reflect state
+            updateUIFromState();
+            document.getElementById('app-status').textContent = "Undone";
+        }
+        
+        // Redo function
+        function redo() {
+            if (state.historyIndex >= state.history.length - 1) return;
+            
+            state.historyIndex++;
+            const nextState = state.history[state.historyIndex];
+            state.currentIllusion = nextState.currentIllusion;
+            state.params = JSON.parse(JSON.stringify(nextState.params));
+            
+            // Update UI to reflect state
+            updateUIFromState();
+            document.getElementById('app-status').textContent = "Redone";
+        }
+        
+        // Update UI elements to match current state
+        function updateUIFromState() {
+            // Update illusion selection
+            document.querySelectorAll('.illusion-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.type === state.currentIllusion) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Update controls
+            document.getElementById('bgColor').value = state.params.bgColor;
+            document.getElementById('primaryColor').value = state.params.primaryColor;
+            document.getElementById('secondaryColor').value = state.params.secondaryColor;
+            document.getElementById('speed').value = state.params.speed;
+            document.getElementById('size').value = state.params.size;
+            document.getElementById('density').value = state.params.density;
+            document.getElementById('intensity').value = state.params.intensity;
+            
+            // Update value displays
+            document.getElementById('bgColorValue').textContent = state.params.bgColor;
+            document.getElementById('primaryColorValue').textContent = state.params.primaryColor;
+            document.getElementById('secondaryColorValue').textContent = state.params.secondaryColor;
+            document.getElementById('speedValue').textContent = state.params.speed;
+            document.getElementById('sizeValue').textContent = state.params.size;
+            document.getElementById('densityValue').textContent = state.params.density;
+            document.getElementById('intensityValue').textContent = state.params.intensity;
+            
+            // Update additional controls
+            updateAdditionalControls();
+        }
+        
+        // Export canvas as PNG
+        function exportAsPng() {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `illusimax-${state.currentIllusion}-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        // Export canvas animation as MP4
+function exportAsMp4() {
+    // In a real implementation, you would use MediaRecorder API or a library
+    // to capture the canvas animation and convert it to MP4
+    alert('MP4 export would be implemented here (requires canvas recording)');
+    
+    // For demonstration purposes only - not functional without actual recording
+    // This would typically use MediaRecorder API to record canvas frames
+    document.getElementById('app-status').textContent = "MP4 export complete";
+}
+// Export canvas animation as MP4
+function exportAsMp4() {
+    // Update status
+    document.getElementById('app-status').textContent = "Recording MP4...";
+    
+    // Create a stream from the canvas
+    const stream = canvas.captureStream(30); // 30 FPS
+// Set canvas to 1080p resolution before recording
+const originalWidth = canvas.width;
+const originalHeight = canvas.height;
+canvas.width = 1920;  // 1080p width
+canvas.height = 1080; // 1080p height
+
+document.getElementById('app-status').textContent = "Recording MP4...";
+// Restore original canvas size after recording completes
+setTimeout(() => {
+    canvas.width = originalWidth;
+    canvas.height = originalHeight;
+}, 5100); // Wait slightly longer than the recording duration
+
+// Restore original canvas size after recording completes
+setTimeout(() => {
+    canvas.width = originalWidth;
+    canvas.height = originalHeight;
+}, 5100); // Wait slightly longer than the recording duration
+
+        
+// Initialize media recorder with the canvas stream
+const recorder = new MediaRecorder(stream, {
+    mimeType: 'video/webm',
+    videoBitsPerSecond: 15000000 // 30 Mbps for higher quality
+    
+});
+    
+
+
+    // Array to store video data chunks
+    const chunks = [];
+    
+    // Event handler for when data is available
+    recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+            chunks.push(e.data);
+        }
+    };
+    
+    // Event handler for when recording stops
+    recorder.onstop = () => {
+        // Combine chunks into a single Blob
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `illusimax-${state.currentIllusion}-${Date.now()}.mp4`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up
+        URL.revokeObjectURL(url);
+        document.getElementById('app-status').textContent = "MP4 export complete";
+    };
+    
+    // Record for 5 seconds
+    recorder.start();
+    
+    // Create a recording indicator
+    const recordingIndicator = document.createElement('div');
+    recordingIndicator.style.position = 'absolute';
+    recordingIndicator.style.top = '20px';
+    recordingIndicator.style.right = '20px';
+    recordingIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+    recordingIndicator.style.color = 'white';
+    recordingIndicator.style.padding = '10px 15px';
+    recordingIndicator.style.borderRadius = '4px';
+    recordingIndicator.style.zIndex = '1000';
+    recordingIndicator.innerHTML = '⚫ Recording';
+    document.querySelector('.canvas-container').appendChild(recordingIndicator);
+    
+    // Stop recording after 5 seconds
+    setTimeout(() => {
+        recorder.stop();
+        document.querySelector('.canvas-container').removeChild(recordingIndicator);
+    }, 5000);
+} 
+// Save project to JSON file
+        function saveProjectToFile() {
+            const projectData = {
+                name: `IllusioMax - ${state.currentIllusion}`,
+                createdAt: new Date().toISOString(),
+                currentIllusion: state.currentIllusion,
+                params: state.params
+            };
+            
+            const dataStr = JSON.stringify(projectData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const dataURL = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `illusimax-project-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(dataURL);
+        }
+        
+        // Initialize the app when the page loads
+        window.addEventListener('load', () => {
+            init();
+            resizeCanvas();
+
+            
+        });
+    </script>
+</body>
+</html>
